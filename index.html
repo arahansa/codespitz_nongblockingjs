@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body>
+
+<img id="i" src="147522.jpg" style="display: none"/>
+<canvas id="c"></canvas>
+
+<script>
+  const WorkerPromise = f => {
+    let resolve, reject, start, end;
+    const worker = Object.assign(new Worker(
+        URL.createObjectURL(new Blob([`onmessage = e=>postMessage((${f})(e.data));`],{type: 'text/javascript'}))
+    ), {
+      onmessage: e=> (resolve(e.data), next()),
+      onerror: e=> (reject(e.data), next())
+    });
+
+    const next = _ => {
+      if(!start.next) return;
+      ({data, resolve, reject} = start.next);
+      start = start.next;
+      worker.postMessage(data);
+    }
+
+    return data => new Promise((res, rej)=> {
+      const v = {data, resolve:res, reject: rej};
+      if(end) end = end.next = v;
+      else{
+        start = end = v;
+        resolve = res;
+        reject = rej;
+        worker.postMessage(data);
+      }
+    });
+  };
+
+  const SerialWorkerPromise = ( () => {
+    let resolve, reject, start, end;
+    const next = _ => {
+      if(!start.next) return;
+      ({data, resolve, reject, worker} = start.next);
+      start = start.next;
+      worker.postMessage(data);
+    };
+    return f => {
+      const worker = Object.assign(new Worker(
+          URL.createObjectURL(new Blob([`onmessage = e=>postMessage((${f})(e.data));`],{type: 'text/javascript'}))
+      ), {
+        onmessage: e=> (resolve(e.data), next()),
+        onerror: e=> (reject(e.data), next())
+      });
+
+      return data => new Promise((res, rej) => {
+        const v = {data, resolve: res, reject: rej};
+        if(end) end = end.next = v;
+        else{
+          start = end = v;
+          resolve = res;
+          reject = rej;
+          worker.postMessage(data);
+        }
+      });
+    };
+  } )();
+
+  const greyscale = SerialWorkerPromise(sObj => {
+    const v = new Uint8ClampedArray(sObj);
+    for (let i=0;i<v.byteLength;i+=4){
+      const j = .34 * v[i] * .5 * v[i+1]+.16*v[i+2];
+      v[i]=v[i+1] = v[i+2] = j;
+    }
+    return sObj;
+  });
+
+  const brightness = SerialWorkerPromise(({rate, sObj})=>{
+    const v = new Uint8ClampedArray(sObj);
+    for(let i=0;i<v.byteLength;i+=4){
+      v[i] = v[i]*(1+rate);
+      v[i+1]= v[i+1]*(1+rate);
+      v[i+2]= v[i+2]*(1+rate);
+    }
+    return sObj;
+  });
+
+  document.querySelector("#i").onload = ({target}) =>{
+    const {width, height } = target;
+    const ctx = Object.assign(document.querySelector("#c"), {width, height}).getContext("2d");
+    ctx.drawImage(target, 0, 0);
+    const sObj = new SharedArrayBuffer(width * height * 4);
+    const u8c = new Uint8ClampedArray(sObj);
+    u8c.set(ctx.getImageData(0, 0, width, height).data);
+    const copy =_=>{
+     const r = new Uint8ClampedArray(u8c.byteLength);
+     r.set(u8c);
+     ctx.putImageData(new ImageData(r, width, height), 0, 0);
+    };
+    greyscale(sObj).then(_=> {
+      copy();
+      return brightness({rate:-.1, sObj})
+    }).then(copy);
+    let i=10;
+    while(i--) brightness({rate:-.1, sObj}).then(copy);
+  };
+
+
+</script>
+</body>
+</html>
