@@ -10,8 +10,6 @@
 <canvas id="c"></canvas>
 
 <script>
-
-
   const SerialWorkerPromise = ( () => {
     let resolve, reject, start, end;
     const next = _ => {
@@ -72,12 +70,11 @@
      r.set(u8c);
      ctx.putImageData(new ImageData(r, width, height), 0, 0);
     };
-    greyscale(sObj).then(_=> {
-      copy();
-      return brightness({rate:-.1, sObj})
-    }).then(copy);
-    let i=100;
-    while(i--) brightness({rate:-.01, sObj}).then(copy);
+   greyscale(sObj).then(copy);
+   let i=5000;
+   while(i--){
+    brightness({rate:-.9, sObj}).then(copy);
+   }
   };
 
 

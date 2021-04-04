@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body>
+<div id="result"></div>
+
+<script>
+ let worker = new Worker('worker.js');
+ worker.onmessage = (event) => {
+  console.log(event.data);
+  document.getElementById("result").innerText = event.data;
+  // 'done'
+  worker.terminate();
+ };
+</script>
+</body>
+</html>

@@ -10,7 +10,7 @@
 <canvas id="c"></canvas>
 
 <script>
- 
+
 
   const SerialWorkerPromise = ( () => {
     let resolve, reject, start, end;
@@ -64,18 +64,22 @@
     const {width, height } = target;
     const ctx = Object.assign(document.querySelector("#c"), {width, height}).getContext("2d");
     ctx.drawImage(target, 0, 0);
+    // 여기 위까지 이미지 그리기
     const sObj = new SharedArrayBuffer(width * height * 4);
     const u8c = new Uint8ClampedArray(sObj);
     u8c.set(ctx.getImageData(0, 0, width, height).data);
+
     const copy =_=>{
      const r = new Uint8ClampedArray(u8c.byteLength);
      r.set(u8c);
      ctx.putImageData(new ImageData(r, width, height), 0, 0);
     };
+
     greyscale(sObj).then(_=> {
       copy();
       return brightness({rate:-.1, sObj})
     }).then(copy);
+
     let i=10;
     while(i--) brightness({rate:-.1, sObj}).then(copy);
   };

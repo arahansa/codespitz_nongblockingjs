@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body>
+
+<div id="res"></div>
+
+<script>
+    const mine = {js:{type:'text/javascript'}};
+    const WorkerPromise = f =>{
+     let resolve, reject;
+     const worker = Object.assign(new Worker(
+       URL.createObjectURL(new Blob([`onmessage = e => postMessage((${f})(e.data));`], mine.js))
+     ), {onmessage: e => resolve(e.data), onerror: e=> reject(e.data)});
+     return data => new Promise((res, rej)=>{
+      resolve = res;
+      reject = rej;
+      worker.postMessage(data);
+     });
+    };
+
+    const addWorld = WorkerPromise(str=> str +"world");
+    // addWorld("hello").then(console.log);
+    addWorld("안녕하세요, ").then(res => document.getElementById("res").innerText = res);
+</script>
+
+</body>
+</html>
