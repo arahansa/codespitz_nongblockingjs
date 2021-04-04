@@ -10,7 +10,7 @@
 <canvas id="c"></canvas>
 
 <script>
- 
+
 
   const SerialWorkerPromise = ( () => {
     let resolve, reject, start, end;
@@ -60,6 +60,15 @@
     return sObj;
   });
 
+  function foregroundBrightness(sObj, rate){
+   const v = new Uint8ClampedArray(sObj);
+   for(let i=0;i<v.byteLength;i+=4){
+    v[i] = v[i]*(1+rate);
+    v[i+1]= v[i+1]*(1+rate);
+    v[i+2]= v[i+2]*(1+rate);
+   }
+  }
+
   document.querySelector("#i").onload = ({target}) =>{
     const {width, height } = target;
     const ctx = Object.assign(document.querySelector("#c"), {width, height}).getContext("2d");
@@ -76,8 +85,11 @@
       copy();
       return brightness({rate:-.1, sObj})
     }).then(copy);
-    let i=10;
-    while(i--) brightness({rate:-.1, sObj}).then(copy);
+    let i=100;
+    while(i--){
+     foregroundBrightness(sObj, -.01);
+     copy();
+    }
   };
 
 

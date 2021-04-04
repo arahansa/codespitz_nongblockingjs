@@ -10,7 +10,7 @@
 <canvas id="c"></canvas>
 
 <script>
- 
+
 
   const SerialWorkerPromise = ( () => {
     let resolve, reject, start, end;
@@ -76,8 +76,8 @@
       copy();
       return brightness({rate:-.1, sObj})
     }).then(copy);
-    let i=10;
-    while(i--) brightness({rate:-.1, sObj}).then(copy);
+    let i=100;
+    while(i--) brightness({rate:-.01, sObj}).then(copy);
   };
 
 
